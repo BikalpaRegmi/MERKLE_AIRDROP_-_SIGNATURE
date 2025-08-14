@@ -12,6 +12,7 @@ BagelToken bagelToken ;
 
 address user ;
 uint256 userPrivateKey ;
+address gasPayer ;
 
 uint256 AMOUNT = 25 * 1e18 ;
 
@@ -23,15 +24,19 @@ function setUp() external{
 bagelToken  = new BagelToken() ;
 merkleAirdrop = new MerkleAirdrop(ROOT , IERC20(bagelToken)) ;
 (user ,userPrivateKey) = makeAddrAndKey("user") ;
+gasPayer = makeAddr("gaspayer") ;
 }
 
 function test_userCanClaim() external {
 uint256 startingBalancOfUser  = IERC20(bagelToken).balanceOf(user);
+bytes32 digest = merkleAirdrop.getMessage(user , AMOUNT);
+
+(uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey ,digest) ;
 
 bagelToken.mint(address(merkleAirdrop) , 50 * 1e18) ;
 
-vm.prank(user);
-merkleAirdrop.claim(user , AMOUNT, Proof);
+vm.prank(gasPayer);
+merkleAirdrop.claim(user , AMOUNT, Proof , v , r , s);
 
 uint256 endingBalance = bagelToken.balanceOf(user) ;
 
